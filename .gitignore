@@ -1,0 +1,7 @@
+*.o
+*~
+*.so
+*.a
+webserv
+my_histogram
+data.temp
