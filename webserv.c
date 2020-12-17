@@ -75,7 +75,7 @@ void servConn (int port) {
 
   for (;;) {
       cli_len = sizeof (cli_name);
-      new_sd = accept (sd, (struct sockaddr *) &cli_name, &cli_len);
+      new_sd = accept (sd, (struct sockaddr *) &cli_name, (socklen_t*) &cli_len);
       printf ("Assigning new socket descriptor:  %d\n", new_sd);
 
       if (new_sd < 0) {
@@ -176,7 +176,7 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine){
 
         //we have found the size of the file and the string before it so we know what to allocate
         int finalSize = strlen(htmlBase) + strlen(sizeStr) + size + 1;
-        char *finalBuffer = malloc(strlen(htmlBase) + strlen(sizeStr) + size + 1);
+        char *finalBuffer = (char*) malloc(strlen(htmlBase) + strlen(sizeStr) + size + 1);
         memcpy(finalBuffer, htmlBase, strlen(htmlBase));
         memcpy(finalBuffer+strlen(htmlBase), sizeStr, strlen(sizeStr));
         memcpy(finalBuffer+strlen(htmlBase)+strlen(sizeStr), send_buffer, size);
