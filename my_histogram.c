@@ -1,6 +1,3 @@
-// #!/bin/sh
-// # test.cgi simple test
-
 /*
 *	Student: Alex Thomas
 *	Assignment: 3 (Fourth assignment)
@@ -15,6 +12,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <math.h>
+#include <string.h>
 // #include <stdlib.h>
 // #include <stdio.h>
 
@@ -52,10 +50,13 @@ int main(int argc, char *argv[])
   /* Error - Then go to default */
 	if (argc != 2) {
     // err_quit("usage:  ftw  <starting-pathname>");
-    // printf("%s\nsetting start path to current directory...\n","usage:  ftw  <starting-pathname>");
+    // printf("%s\nsetting start path to current directory...\n","usage:  ftw  <starting-pathname>\n");
     start_path = DEFAULT_PATH;
   } else {
-    start_path = argv[1];
+    /* Parsing query string */
+    char* query_string = argv[1];
+    start_path = strtok(query_string,"&");
+    // printf("Start Path: %s\n",start_path);
   }
 
 	ret = myftw(start_path, myfunc);		/* does it all */
@@ -118,6 +119,21 @@ int main(int argc, char *argv[])
   /* Pretty Print as HTML */
   printf("Content-type: text/html\n\n");
   printf("<html>\n");
+  printf("<style>\n");
+  printf("img {\n");
+  printf("display: block;\n");
+  printf("margin: auto;\n");
+  printf("}\n");
+  printf("#title {\n");
+  printf("font-size: 16px;\n");
+  printf("color: red;\n");
+  printf("background: white;\n");
+  printf("text-align: center;\n");
+  printf("}\n");
+  printf("</style>\n");
+  printf("<title>CS410 Webserver</title>\n");
+  printf("<h1 id=\"title\">CS410 Webserver</h1>\n");
+  printf("</br>\n");
   printf("<img src=\"plot.jpg\">\n");
   printf("</html>\n");
 
