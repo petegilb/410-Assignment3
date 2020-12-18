@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Test HTML File</title>
+    </head>
+    <body>
+        <h3>Arduino Controller</h3>
+        <p>Press the Buttons below to control the Arduino</p>
+        <button onclick="turnOn()">ON</button>
+        <button onclick="turnOff()">OFF</button>
+    </body>
+</html>
+
+<script>
+function turnOn(){
+    console.log("trying to turn it on");
+    let xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", "/toggle_pin.cgi?2&ON");
+    xmlHttp.send();
+}
+function turnOff(){
+    console.log("trying to turn it off");
+    let xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", "/toggle_pin.cgi?2&OFF");
+    xmlHttp.send();
+}
+</script>
