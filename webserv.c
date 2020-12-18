@@ -85,8 +85,8 @@ void servConn (int port) {
       }
 
       if (fork () == 0) {    /* Child process. */
-          //shutdown(sd, SHUT_RDWR);
           close (sd);
+
           //read the get
           read (new_sd, &data, 1000);
           printf ("Received string = %s\n", data);
@@ -102,16 +102,6 @@ void servConn (int port) {
               exit(0);
           }
 
-          //finding the host ip so we can find the file path
-          /*char dataCpy[1000];
-          //copy so we don't change the data string
-          memcpy(dataCpy, data, strlen(data));
-          char *hostLine;
-          hostLine = strtok(dataCpy, "'\n'");
-          hostLine = strtok(NULL, "'\n'");
-          char* hostIP;
-          hostIP = strtok(hostLine, " ");
-          hostIP = strtok(NULL, " ");*/
           char firstLinecpy[100];
           memcpy(firstLinecpy, firstLine, strlen(firstLine));
           char* filePath;
@@ -133,7 +123,6 @@ void servConn (int port) {
           printf("file path is: %s\n", finalPath);
           //first we will check if the file exists
           if(access(finalPath, F_OK|R_OK) == 0){
-              //printf("file exists\n");
               writeToSocket(new_sd, finalPath, firstLine, quesPtr);
           }
           else{ //404 error not found
@@ -142,13 +131,6 @@ void servConn (int port) {
                   perror("error writing to socket\n");
               }
           }
-
-          //sample response to the get call
-          /*char* sample = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 14\n\nHello browser!\n";
-          printf("writing to socket %d\n", new_sd);
-          if(write(new_sd, sample, strlen(sample)) < 0){
-              perror("error writing to socket\n");
-          }*/
           exit (0);
       }
   }
@@ -171,7 +153,6 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
                 perror("error reading file\n");
             }
         }
-        //printf("%s\n", send_buffer);
         //get file descriptor
         int fd = fileno(toSend);
         struct stat st;
@@ -184,8 +165,7 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         char sizeStr[sizeofSizeStr+2];
         sprintf(sizeStr, "%d", size);
         strcat(sizeStr, "\n\n");
-        sizeofSizeStr += 2; //maybe 4
-        //printf("size of the small char is %ld\n", strlen(sizeStr));
+        sizeofSizeStr += 2;
 
         //we have found the size of the file and the string before it so we know what to allocate
         int finalSize = strlen(htmlBase) + strlen(sizeStr) + size + 1;
@@ -193,11 +173,9 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         memcpy(finalBuffer, htmlBase, strlen(htmlBase));
         memcpy(finalBuffer+strlen(htmlBase), sizeStr, strlen(sizeStr));
         memcpy(finalBuffer+strlen(htmlBase)+strlen(sizeStr), send_buffer, size);
-        //printf("current val: %s\n", finalBuffer);
         if(write(new_sd, finalBuffer, finalSize) < 0){
             perror("error writing to socket\n");
         }
-        //printf("final size of buffer: %d\n", finalSize);
 
     }
     else if(strstr(firstLine, ".cgi") != NULL){
@@ -213,9 +191,6 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         toExec = strtok(NULL, "!");
         //get rid of new line char
         strtok(toExec, "\n");
-        //strcat(toExec, " ");
-        //strcat(toExec, filePath);
-        //printf("exec var is: %s\n", toExec);
         char htmlBase[] = "HTTP/1.1 200 OK\n";
         if(write(new_sd, htmlBase, strlen(htmlBase)) < 0){
             perror("error writing to socket\n");
@@ -247,7 +222,6 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         }
         //change stdout back
         dup2(stdoutCopy, 1);
-        //printf("hi\n");
         shutdown(new_sd, SHUT_RDWR);
         close(new_sd);
     }
