@@ -1,7 +1,7 @@
 # Make file for ease of use
 
 # Variables
-PROGS = webserv my_histogram
+PROGS = webserv my_histogram aactrl arduino_connect
 OBJS = error.o pathalloc.o
 
 # Compile Everything
@@ -14,6 +14,12 @@ webserv: webserv.c
 	gcc -o $@ $^ -lm
 
 my_histogram: my_histogram.c $(OBJS)
+	gcc -o $@ $^
+
+aactrl: aactrl.c aactrl.h
+	gcc -o $@ $^
+
+arduino_connect: arduino_connect.c
 	gcc -o $@ $^
 
 # Objects
