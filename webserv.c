@@ -41,7 +41,7 @@
 //duplicate output from file onto socket descriptor
 //that will let you write information to the client
 
-void writeToSocket(int new_sd, char* filePath, char* firstLine);
+void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments);
 
 //server code provided by the class
 void servConn (int port) {
@@ -122,11 +122,19 @@ void servConn (int port) {
           finalPath[0] ='\0';
           strcat(finalPath, ".");
           strcat(finalPath, filePath);
+          //get rid of the question mark
+          char *quesPtr = strchr(finalPath, '?');
+          if(quesPtr){
+              quesPtr[0] = '\0';
+              quesPtr += 1;
+          }
+          //get the index after the ? and beyond until the null char
+          //printf("pointer is %s\n", quesPtr);
           printf("file path is: %s\n", finalPath);
           //first we will check if the file exists
           if(access(finalPath, F_OK|R_OK) == 0){
               //printf("file exists\n");
-              writeToSocket(new_sd, finalPath, firstLine);
+              writeToSocket(new_sd, finalPath, firstLine, quesPtr);
           }
           else{ //404 error not found
               char* err404 = "HTTP/1.1 404 Not Found\nContent-Type: text/plain\nContent-Length: 10\n\nError 404!\n";
@@ -147,13 +155,13 @@ void servConn (int port) {
   //close (sd);
 }
 
-void writeToSocket(int new_sd, char* filePath, char* firstLine){
+void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments){
     if(strstr(firstLine, ".html") != NULL){
         printf("HTML REQUEST\n");
         char* htmlBase = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
         char send_buffer[5000];
         FILE *toSend;
-        if(!(toSend = fopen("./index.html", "rb"))){
+        if(!(toSend = fopen(filePath, "rb"))){
             perror("error opening file\n");
         }
         //while we haven't gotten an eof
@@ -194,6 +202,7 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine){
     }
     else if(strstr(firstLine, ".cgi") != NULL){
         //exec the cgi and then dup2 the output to the socket
+
         FILE* fp = fopen(filePath, "r");
         char buffer[255];
         //get the first line of the file so we can figure out how to run it
@@ -215,13 +224,23 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine){
         dup2(new_sd, 1);
         pid_t pid = fork();
         if(pid == 0){
-            char* argv[] = {toExec,filePath};
-            if(execv(toExec, argv) <0){
-                perror("could not execute");
+            if(arguments){
+                char* argv[] = {toExec,filePath,arguments};
+                if(execv(toExec, argv) <0){
+                    perror("could not execute");
+                }
             }
+            else{
+                printf("made it here yo!\n");
+                char* argv[] = {toExec,filePath};
+                if(execv(toExec, argv) <0){
+                    perror("could not execute");
+                }
+            }
+
         }
         else if(pid < 0){
-            perror("rip us\n");
+            perror("error forking and executing\n");
         }
         else{
             wait(&pid);
@@ -232,6 +251,9 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine){
         shutdown(new_sd, SHUT_RDWR);
         close(new_sd);
     }
+    /*else if((strstr(firstLine, ".gif") != NULL) || (strstr(firstLine, ".jpg") != NULL) || (strstr(firstLine, ".jpeg") != NULL)){
+
+    }*/
     else{ //501 Not Implemented
         char* err501 = "HTTP/1.1 501 Not Implemented\nContent-Type: text/plain\nContent-Length: 10\n\nError 501!\n";
         if(write(new_sd, err501, strlen(err501)) < 0){
