@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -84,6 +85,7 @@ void servConn (int port) {
       }
 
       if (fork () == 0) {    /* Child process. */
+          //shutdown(sd, SHUT_RDWR);
           close (sd);
           //read the get
           read (new_sd, &data, 1000);
@@ -93,6 +95,12 @@ void servConn (int port) {
           //get firstLine so we can check for the ending
           memcpy(firstLine, data, endofLine-data);
           printf("%s\n", firstLine);
+
+          if(strstr(firstLine, "favicon") != NULL){
+              printf("i hate favicons\n");
+              close(new_sd);
+              exit(0);
+          }
 
           //finding the host ip so we can find the file path
           /*char dataCpy[1000];
@@ -136,24 +144,21 @@ void servConn (int port) {
           exit (0);
       }
   }
+  //close (sd);
 }
 
 void writeToSocket(int new_sd, char* filePath, char* firstLine){
-    if(strstr(firstLine, "favicon") != NULL){
-        close(new_sd);
-        exit(0);
-    }
     if(strstr(firstLine, ".html") != NULL){
         printf("HTML REQUEST\n");
         char* htmlBase = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-        char send_buffer[1000];
+        char send_buffer[5000];
         FILE *toSend;
         if(!(toSend = fopen("./index.html", "rb"))){
             perror("error opening file\n");
         }
         //while we haven't gotten an eof
         while(!feof(toSend)){
-            int numread = fread(send_buffer, sizeof(unsigned char), 1000, toSend);
+            int numread = fread(send_buffer, sizeof(unsigned char), 5000, toSend);
             if(numread < 1){
                 perror("error reading file\n");
             }
@@ -188,7 +193,44 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine){
 
     }
     else if(strstr(firstLine, ".cgi") != NULL){
-
+        //exec the cgi and then dup2 the output to the socket
+        FILE* fp = fopen(filePath, "r");
+        char buffer[255];
+        //get the first line of the file so we can figure out how to run it
+        fgets(buffer, 255, fp);
+        printf("first line of file is: %s\n", buffer);
+        char* toExec;
+        toExec = strtok(buffer, "!");
+        toExec = strtok(NULL, "!");
+        //get rid of new line char
+        strtok(toExec, "\n");
+        //strcat(toExec, " ");
+        //strcat(toExec, filePath);
+        //printf("exec var is: %s\n", toExec);
+        char htmlBase[] = "HTTP/1.1 200 OK\n";
+        if(write(new_sd, htmlBase, strlen(htmlBase)) < 0){
+            perror("error writing to socket\n");
+        }
+        int stdoutCopy = dup(1);
+        dup2(new_sd, 1);
+        pid_t pid = fork();
+        if(pid == 0){
+            char* argv[] = {toExec,filePath};
+            if(execv(toExec, argv) <0){
+                perror("could not execute");
+            }
+        }
+        else if(pid < 0){
+            perror("rip us\n");
+        }
+        else{
+            wait(&pid);
+        }
+        //change stdout back
+        dup2(stdoutCopy, 1);
+        //printf("hi\n");
+        shutdown(new_sd, SHUT_RDWR);
+        close(new_sd);
     }
     else{ //501 Not Implemented
         char* err501 = "HTTP/1.1 501 Not Implemented\nContent-Type: text/plain\nContent-Length: 10\n\nError 501!\n";
