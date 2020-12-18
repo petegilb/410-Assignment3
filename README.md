@@ -66,6 +66,20 @@ Example: </br>
 localhost:8080/my_histogram.cgi?testFolder
 ```
 
+# Physical Computing Aspect
+https://www.amazon.com/ELEGOO-Project-Tutorial-Controller-Projects/dp/B01D8KOZF4/ </br>
+Arduino UNO, LED, and Fan/3-6V Motor Used as well as cables,breadboard,etc...</br>
+</br>
+After running our webserver we make a get request to our html page (control.html) which has two buttons that once clicked, make a get request to a cgi file that then executes a c file which connects to the Arduino through the serial port and digitalwrites to the pin based off the parameters passed in.
+
+Example: </br> 
+```
+localhost:8080/control.html
+```
+</br>
+***Why we used these components:***
+We chose to use these components because we already had them on hand, and thought a connection through an Arduino that is controlled from a webserver would be fascinating, since we have little experience with Arduinos.
+
 # Shortcomings
 
 1. Additional Features not yet implemented </br>
