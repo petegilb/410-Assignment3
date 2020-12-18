@@ -53,8 +53,12 @@ directories: ls -l is run for whatever directory is indicated in the url </br>
 cgi files: cgi is run based on the #!/bin/... on the first line and output is redirected to the client </br>
 html files: displays html files based on their content length and writes to the client </br>
 image files: displays image files and writes to the client socket </br>
-plain text: plain text will just be written to the client in the same way 
+plain text: plain text will just be written to the client in the same way </br>
 
+to run the web server do: </br>
+```
+./webserv
+```
 
 # Running Dynamic GNUPLOT
 Example: </br> 
