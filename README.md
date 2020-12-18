@@ -77,7 +77,7 @@ Example: </br>
 localhost:8080/control.html
 ```
 </br>
-***Why we used these components:***
+Why we used these components:</br>
 We chose to use these components because we already had them on hand, and thought a connection through an Arduino that is controlled from a webserver would be fascinating, since we have little experience with Arduinos.
 
 # Shortcomings
