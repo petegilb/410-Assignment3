@@ -223,6 +223,7 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         int stdoutCopy = dup(1);
         dup2(new_sd, 1);
         pid_t pid = fork();
+        //child process
         if(pid == 0){
             if(arguments){
                 char* argv[] = {toExec,filePath,arguments};
@@ -242,7 +243,7 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         else if(pid < 0){
             perror("error forking and executing\n");
         }
-        else{
+        else{ //parent waits for child to finish
             wait(&pid);
         }
         //change stdout back
@@ -251,9 +252,56 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         shutdown(new_sd, SHUT_RDWR);
         close(new_sd);
     }
-    /*else if((strstr(firstLine, ".gif") != NULL) || (strstr(firstLine, ".jpg") != NULL) || (strstr(firstLine, ".jpeg") != NULL)){
+    else if((strstr(firstLine, ".jpg") != NULL) || (strstr(firstLine, ".jpeg") != NULL)){
+        char* jpgBase = "HTTP/1.1 200 OK\nContent-Type: image/jpeg\n\n";
+        FILE* fp;
+        char send_buffer[5000];
+        if(!(fp = fopen(filePath, "rb"))){
+            perror("error opening file\n");
+        }
 
-    }*/
+        //write the initial response html stuff
+        if(write(new_sd, jpgBase, strlen(jpgBase)) < 0){
+            perror("error writing to socket\n");
+        }
+        //keep going through the file and writing to the socket
+        while(!feof(fp)){
+            int numread = fread(send_buffer, sizeof(unsigned char), 5000, fp);
+            if(numread < 1){
+                perror("error reading file\n");
+            }
+            if(write(new_sd, send_buffer, numread) < 0){
+                perror("error writing to socket\n");
+            }
+        }
+        shutdown(new_sd, SHUT_RDWR);
+        close(new_sd);
+    }
+    else if(strstr(firstLine, ".gif") != NULL){
+        char* jpgBase = "HTTP/1.1 200 OK\nContent-Type: image/gif\n\n";
+        FILE* fp;
+        char send_buffer[5000];
+        if(!(fp = fopen(filePath, "rb"))){
+            perror("error opening file\n");
+        }
+
+        //write the initial response html stuff
+        if(write(new_sd, jpgBase, strlen(jpgBase)) < 0){
+            perror("error writing to socket\n");
+        }
+        //keep going through the file and writing to the socket
+        while(!feof(fp)){
+            int numread = fread(send_buffer, sizeof(unsigned char), 5000, fp);
+            if(numread < 1){
+                perror("error reading file\n");
+            }
+            if(write(new_sd, send_buffer, numread) < 0){
+                perror("error writing to socket\n");
+            }
+        }
+        shutdown(new_sd, SHUT_RDWR);
+        close(new_sd);
+    }
     else{ //501 Not Implemented
         char* err501 = "HTTP/1.1 501 Not Implemented\nContent-Type: text/plain\nContent-Length: 10\n\nError 501!\n";
         if(write(new_sd, err501, strlen(err501)) < 0){
