@@ -1,3 +1,6 @@
+// #!/bin/sh
+// # test.cgi simple test
+
 /*
 *	Student: Alex Thomas
 *	Assignment: 3 (Fourth assignment)
@@ -49,7 +52,7 @@ int main(int argc, char *argv[])
   /* Error - Then go to default */
 	if (argc != 2) {
     // err_quit("usage:  ftw  <starting-pathname>");
-    printf("%s\nsetting start path to current directory...\n","usage:  ftw  <starting-pathname>");
+    // printf("%s\nsetting start path to current directory...\n","usage:  ftw  <starting-pathname>");
     start_path = DEFAULT_PATH;
   } else {
     start_path = argv[1];
@@ -60,20 +63,20 @@ int main(int argc, char *argv[])
 	ntot = nreg + ndir + nblk + nchr + nfifo + nslink + nsock;
 	if (ntot == 0)
 		ntot = 1;		/* avoid divide by 0; print 0 for all counts */
-	printf("regular files  = %7ld, %5.2f %%\n", nreg,
-	  nreg*100.0/ntot);
-	printf("directories    = %7ld, %5.2f %%\n", ndir,
-	  ndir*100.0/ntot);
-	printf("block special  = %7ld, %5.2f %%\n", nblk,
-	  nblk*100.0/ntot);
-	printf("char special   = %7ld, %5.2f %%\n", nchr,
-	  nchr*100.0/ntot);
-	printf("FIFOs          = %7ld, %5.2f %%\n", nfifo,
-	  nfifo*100.0/ntot);
-	printf("symbolic links = %7ld, %5.2f %%\n", nslink,
-	  nslink*100.0/ntot);
-	printf("sockets        = %7ld, %5.2f %%\n", nsock,
-	  nsock*100.0/ntot);
+	// printf("regular files  = %7ld, %5.2f %%\n", nreg,
+	//   nreg*100.0/ntot);
+	// printf("directories    = %7ld, %5.2f %%\n", ndir,
+	//   ndir*100.0/ntot);
+	// printf("block special  = %7ld, %5.2f %%\n", nblk,
+	//   nblk*100.0/ntot);
+	// printf("char special   = %7ld, %5.2f %%\n", nchr,
+	//   nchr*100.0/ntot);
+	// printf("FIFOs          = %7ld, %5.2f %%\n", nfifo,
+	//   nfifo*100.0/ntot);
+	// printf("symbolic links = %7ld, %5.2f %%\n", nslink,
+	//   nslink*100.0/ntot);
+	// printf("sockets        = %7ld, %5.2f %%\n", nsock,
+	//   nsock*100.0/ntot);
 
   /* GNU Plot - https://stackoverflow.com/questions/3521209/making-c-code-plot-a-graph-automatically */
   // open (GNUPLOT, "|gnuplot"); // Notice the vertical bar for a pipe
@@ -111,6 +114,12 @@ int main(int argc, char *argv[])
   for (i=0; i < NUM_COMMANDS; i++) {
     fprintf(gnuplotPipe, "%s \n", commandsForGnuplot[i]); //Send commands to gnuplot one by one.
   }
+
+  /* Pretty Print as HTML */
+  printf("Content-type: text/html\n\n");
+  printf("<html>\n");
+  printf("<img src=\"plot.jpg\">\n");
+  printf("</html>\n");
 
 	exit(ret);
 }
