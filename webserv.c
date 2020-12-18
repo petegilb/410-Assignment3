@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -84,6 +85,7 @@ void servConn (int port) {
       }
 
       if (fork () == 0) {    /* Child process. */
+          //shutdown(sd, SHUT_RDWR);
           close (sd);
           //read the get
           read (new_sd, &data, 1000);
@@ -142,6 +144,7 @@ void servConn (int port) {
           exit (0);
       }
   }
+  //close (sd);
 }
 
 void writeToSocket(int new_sd, char* filePath, char* firstLine){
@@ -199,19 +202,34 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine){
         char* toExec;
         toExec = strtok(buffer, "!");
         toExec = strtok(NULL, "!");
+        //get rid of new line char
         strtok(toExec, "\n");
         //strcat(toExec, " ");
         //strcat(toExec, filePath);
         //printf("exec var is: %s\n", toExec);
-        char htmlBase[] = "HTTP/1.1 200 OK\nTransfer-Encoding: chunked\n";
+        char htmlBase[] = "HTTP/1.1 200 OK\n";
         if(write(new_sd, htmlBase, strlen(htmlBase)) < 0){
             perror("error writing to socket\n");
         }
+        int stdoutCopy = dup(1);
         dup2(new_sd, 1);
-        char* argv[] = {toExec,filePath};
-        if(execv(toExec, argv) <0){
-            perror("could not execute");
+        pid_t pid = fork();
+        if(pid == 0){
+            char* argv[] = {toExec,filePath};
+            if(execv(toExec, argv) <0){
+                perror("could not execute");
+            }
         }
+        else if(pid < 0){
+            perror("rip us\n");
+        }
+        else{
+            wait(&pid);
+        }
+        //change stdout back
+        dup2(stdoutCopy, 1);
+        //printf("hi\n");
+        shutdown(new_sd, SHUT_RDWR);
         close(new_sd);
     }
     else{ //501 Not Implemented
