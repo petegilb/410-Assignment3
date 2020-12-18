@@ -1,7 +1,7 @@
 # Make file for ease of use
 
 # Variables
-PROGS = webserv my_histogram aactrl arduino_connect
+PROGS = webserv my_histogram arduino_connect
 OBJS = error.o pathalloc.o
 
 # Compile Everything
