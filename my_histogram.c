@@ -23,7 +23,7 @@ static int		myftw(char *, Myfunc *);
 static int		dopath(Myfunc *);
 
 #define NUM_POINTS 5
-#define NUM_COMMANDS 2
+#define NUM_COMMANDS 10
 #define NUM_FILE_TYPES 7
 
 static long	nreg, ndir, nblk, nchr, nfifo, nslink, nsock, ntot;
@@ -78,12 +78,24 @@ int main(int argc, char *argv[])
   /* GNU Plot - https://stackoverflow.com/questions/3521209/making-c-code-plot-a-graph-automatically */
   // open (GNUPLOT, "|gnuplot"); // Notice the vertical bar for a pipe
 
-  /* GNU Commands */
+  /* GNU Commands - (Histogram): https://stackoverflow.com/questions/10462546/gnuplot-histogram-line-0-too-many-columns-in-using-specification */
   int binwidth=5;
-  char * commandsForGnuplot[] = {"set title \"TITLEEEEE\"", "binwidth=5\nbin(x,width)=width*floor(x/width)\nplot 'data.temp' using (bin($1,binwidth)):(1.0) smooth freq with boxes"};
-  char* labels[NUM_FILE_TYPES] = {"Regular", "Directory", "Block", "Character Special", "FiFo", "Symbolic Link", "Socket"};
+  char* y_label = "frequency";
+  char* x_labels[NUM_FILE_TYPES] = {"regular", "directory", "link", "fifo", "socket", "block", "character"};
+  char * commandsForGnuplot[] = {"set title \"File Count\"",
+                                 "set xtics rotate out",
+                                 "set key off",
+                                 "set ylabel \"frequency\"",
+                                 "set boxwidth 0.9 relative",
+                                 "set style data histograms",
+                                 "set style fill solid 1.0 border -1",
+                                 // "set term x11 persist",
+                                 "set term jpeg",
+                                 "set output 'plot.jpg'",
+                                 "plot 'data.temp' using 2:xticlabels(3)"};
+
   double xvals[NUM_FILE_TYPES] = {1,2,3,4,5,6,7};
-  double yvals[NUM_FILE_TYPES] = {nreg, ndir, nblk, nchr, nfifo, nslink, nsock};
+  double yvals[NUM_FILE_TYPES] = {nreg, ndir, nslink, nfifo, nsock, nblk, nchr};
   FILE * temp = fopen("data.temp", "w");
 
   /*Opens an interface that one can use to send commands as if they were typing into the
@@ -92,15 +104,13 @@ int main(int argc, char *argv[])
   */
   FILE * gnuplotPipe = popen ("gnuplot -persistent", "w");
   int i;
-  for (i=0; i < NUM_POINTS; i++) {
-    fprintf(temp, "%lf %lf \n", xvals[i], yvals[i]); //Write the data to a temporary file
+  for (i=0; i < NUM_FILE_TYPES; i++) {
+    fprintf(temp, "%lf %lf %s \n", xvals[i], yvals[i], x_labels[i]); //Write the data to a temporary file
   }
 
   for (i=0; i < NUM_COMMANDS; i++) {
     fprintf(gnuplotPipe, "%s \n", commandsForGnuplot[i]); //Send commands to gnuplot one by one.
   }
-
-  // fflush(gnuplotPipe);
 
 	exit(ret);
 }
