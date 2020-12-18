@@ -232,7 +232,6 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
                 }
             }
             else{
-                printf("made it here yo!\n");
                 char* argv[] = {toExec,filePath};
                 if(execv(toExec, argv) <0){
                     perror("could not execute");
@@ -302,10 +301,43 @@ void writeToSocket(int new_sd, char* filePath, char* firstLine, char* arguments)
         shutdown(new_sd, SHUT_RDWR);
         close(new_sd);
     }
-    else{ //501 Not Implemented
-        char* err501 = "HTTP/1.1 501 Not Implemented\nContent-Type: text/plain\nContent-Length: 10\n\nError 501!\n";
-        if(write(new_sd, err501, strlen(err501)) < 0){
-            perror("error writing to socket\n");
+    else{
+        //check if it's a directory
+        struct stat statbuf;
+        stat(filePath, &statbuf);
+        if(S_ISDIR(statbuf.st_mode)){
+            char dirBase[] = "HTTP/1.1 200 OK\nContent-Type: text/plain\n\n";
+            if(write(new_sd, dirBase, strlen(dirBase)) < 0){
+                perror("error writing to socket\n");
+            }
+            int stdoutCopy = dup(1);
+            dup2(new_sd, 1);
+            pid_t pid = fork();
+            //child process
+            char toExec[] = "/bin/ls";
+            if(pid == 0){
+                char* argv[] = {toExec, "-l",filePath};
+                if(execv(toExec, argv) <0){
+                    perror("could not execute");
+                }
+            }
+            else if(pid < 0){
+                perror("error forking and executing\n");
+            }
+            else{ //parent waits for child to finish
+                wait(&pid);
+            }
+            //change stdout back
+            dup2(stdoutCopy, 1);
+            shutdown(new_sd, SHUT_RDWR);
+            close(new_sd);
+        }
+        else{
+            //501 Not Implemented
+            char* err501 = "HTTP/1.1 501 Not Implemented\nContent-Type: text/plain\nContent-Length: 10\n\nError 501!\n";
+            if(write(new_sd, err501, strlen(err501)) < 0){
+                perror("error writing to socket\n");
+            }
         }
     }
 }
